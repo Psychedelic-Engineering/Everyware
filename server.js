@@ -33,13 +33,9 @@ var server = app.listen(80, function() {});
  * Twitter Stream
  */
 var Twit = require('twit');
+var credentials = require('./twittercredentials.js').credentials;
 
-var T = new Twit({
-	consumer_key: '75GuhkehsPv7KkF4XKpJnA',
-	consumer_secret: 'TkTZBDnzina0U7ZiIdXocmvhsu7jdwj92zCjusoPi4',
-	access_token: '54156137-3bbcAkhxpvUq9OolYq56GRsdbC9uAYYJRZqxmyllf',
-	access_token_secret: 'mjw8BA1q7fwUxlR04itRxW8Ecy96fV1BYoJfs7yxhrvqa'
-});
+var T = new Twit(credentials);
 
 var hashtag = '#everyware';
 var stream = T.stream('statuses/filter', {
