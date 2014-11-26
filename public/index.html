@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Remote</title>
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1 user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script src="scripts/utils.js" type="text/javascript"></script>
+		<script src="scripts/slider.js" type="text/javascript"></script>
+		<script src="scripts/radio.js" type="text/javascript"></script>
+		<script>
+	var sliderR, sliderG, sliderB, sliderS;
+	var rPreset;
+	var command;
+	var timer		= 0;
+	var host = window.location.hostname;
+	var ws =  new WebSocket("ws://" + host + ":8000/");
+	var servoPos;
+
+     ws.onopen = function(evt)
+     {
+        console.log("Websocket Open");
+     };
+     ws.onerror = function (evt) {
+  		console.log('WebSocket Error ' + error);
+	};
+     ws.onmessage = function (evt) 
+     { 
+        var message = evt.data;
+        console.log("Websocket received: " + message);
+        try {
+        	var params = message.split("?")[1].split(",");
+	        if (params.length == 1)
+	        	updateGUIS(params[0]);
+	        else if (params.length > 2)
+	        	updateGUIRGB(params[0], params[1], params[2]);
+	    } catch(err) {
+        	
+	    }
+     };
+     ws.onClose = function(evt)
+     { 
+        console.log("Connection is closed..."); 
+     };
+	
+	window.onload = function () {
+		sliderR	= new Slider( "knobR", changeRGB, 0, 1 );
+		sliderG	= new Slider( "knobG", changeRGB, 0, 1 );
+		sliderB	= new Slider( "knobB", changeRGB, 0, 1 );
+		sliderS	= new Slider( "knobS", changeServo, 10, 180 );
+		rPreset	= new RadioGroup( "preset", onPreset );
+	}
+	
+	function onPreset( id ) {
+		var colors = $(id).style.backgroundColor.replace("rgb(", "").replace(")", "").split(",").map(parseFloat);
+		var r = colors[0] / 255;
+		var g = colors[1] / 255;
+		var b = colors[2] / 255;
+		updateGUIRGB(r, g, b);
+		
+		command = "fadeRGB?";
+		command += r.toFixed(2) + "," + g.toFixed(2) + "," + b.toFixed(2);
+		command += ",600";
+		change();
+	}
+	
+	function updateGUIRGB(r, g, b) {
+		sliderR.setValue(r);
+		sliderG.setValue(g);
+		sliderB.setValue(b);
+	}
+	
+	function updateGUIS(s) {
+		sliderS.setValue(s);
+	}
+	
+	function changeRGB( ) {
+		command = "setRGB?";
+		command += sliderR.value.toFixed(2) + "," + sliderG.value.toFixed(2) + "," + sliderB.value.toFixed(2);
+		change();
+	}
+	
+	function changeServo( ) {
+		command = "setServo?";
+		command += sliderS.value.toFixed(0);
+		change();
+	}
+	
+	function change( ) {
+		update();
+		/*
+		if (timer > 0 ) {
+			clearTimeout( timer );
+			timer	= 0;
+		}
+		timer	= setTimeout("update()", 10);
+		*/
+	}
+
+
+	function update( ) {
+        ws.send(command);
+        /*
+		console.log(command);
+		clearTimeout( timer );
+		timer	= 0;
+		*/
+	}
+		</script>
+	</head>
+	<body>
+		<div class="section">
+			<h1>RGB Controller</h1>
+		</div>
+		<div class="section">
+			<h1 id="hPreset">Preset</h1>
+			<div id="preset" class="radiogroup">
+				<a href="#" id="p0" class="radio" style="background-color:#000000">&nbsp;</a>
+				<a href="#" id="p1" class="radio" style="background-color:#ff0000">&nbsp;</a>
+				<a href="#" id="p2" class="radio" style="background-color:#ffff00">&nbsp;</a>
+				<a href="#" id="p3" class="radio" style="background-color:#00ff00">&nbsp;</a>
+				<a href="#" id="p4" class="radio" style="background-color:#00ffff">&nbsp;</a>
+				<a href="#" id="p5" class="radio" style="background-color:#0000ff">&nbsp;</a>
+				<a href="#" id="p6" class="radio" style="background-color:#ff00ff">&nbsp;</a>
+				<a href="#" id="p7" class="radio" style="background-color:#ffffff">&nbsp;</a>
+			</div>
+			<div style="clear:both;"></div>
+		</div>
+		<div class="section">
+			<h1 id="hRed">Red</h1>
+			<div id='sliderR'>
+				<div id='knobR'></div>
+			</div>
+			<h1 id="hGreen">Green</h1>
+			<div id='sliderG'>
+				<div id='knobG'></div>
+			</div>
+			<h1 id="hBlue">Blue</h1>
+			<div id='sliderB'>
+				<div id='knobB'></div>
+			</div>
+		</div>
+		<div class="section">
+			<h1 id="hServo">Servo</h1>
+			<div id='sliderS'>
+				<div id='knobS'></div>
+			</div>
+		</div>
+	</body>
+</html>
